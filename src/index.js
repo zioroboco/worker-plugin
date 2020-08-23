@@ -19,6 +19,23 @@ import WORKER_PLUGIN_SYMBOL from './symbol';
 let ParserHelpers;
 try {
   ParserHelpers = require('webpack/lib/javascript/JavascriptParserHelpers'); // Webpack 5
+  if (!ParserHelpers.addParsedVariableToModule) {
+    ParserHelpers.addParsedVariableToModule = (parser, name, expression) => {
+      if (!parser.state.current.addVariable) return false;
+      const deps = [];
+      parser.parse(expression, {
+        current: {
+          addDependency: dep => {
+            dep.userRequest = name;
+            deps.push(dep);
+          }
+        },
+        module: parser.state.module
+      });
+      parser.state.current.addVariable(name, expression, deps);
+      return true;
+    };
+  };
 } catch (e) {}
 ParserHelpers = ParserHelpers || require('webpack/lib/ParserHelpers'); // Webpack 4
 let HarmonyImportSpecifierDependency;
